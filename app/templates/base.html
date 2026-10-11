@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ config.COMMUNITY_NAME }} — أثر (Athar)</title>
+    <!-- Wikimedia Codex CSS Distribution -->
+    <link rel="stylesheet" href="https://tools-static.wmflabs.org/cdnjs/ajax/libs/codex/0.17.1/codex.style.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/codex.style.css') }}">
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="cdx-body">
+    <header class="cdx-header">
+        <div class="header-container">
+            <a href="{{ url_for('web.dashboard') }}" class="brand-title">
+                <span class="brand-badge">أثر</span> {{ config.COMMUNITY_NAME }}
+            </a>
+            <nav class="nav-links">
+                <a href="{{ url_for('web.dashboard') }}" class="cdx-button cdx-button--quiet">لوحة القيادة (Dashboard)</a>
+                <a href="{{ url_for('web.export_view') }}" class="cdx-button cdx-button--quiet">التقارير (Export)</a>
+                {% if session.get('username') %}
+                    <a href="{{ url_for('web.create_project') }}" class="cdx-button cdx-button--action cdx-button--weight-primary">+ إضافة نشاط</a>
+                    <span class="user-greeting">مرحباً، <strong>{{ session.get('username') }}</strong></span>
+                    <a href="{{ url_for('oauth.logout') }}" class="cdx-button cdx-button--quiet">خروج</a>
+                {% else %}
+                    <a href="{{ url_for('oauth.login') }}" class="cdx-button cdx-button--action cdx-button--weight-primary">تسجيل الدخول بـ Wikimedia</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="cdx-message cdx-message--{{ category }}">
+                            <div class="cdx-message__content">{{ message }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="cdx-footer">
+        <p>أثر (Athar) — أداة مجتمعية مفتوحة المصدر تستضيفها <a href="https://toolforge.org">Wikimedia Toolforge</a>.</p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

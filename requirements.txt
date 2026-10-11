@@ -1,0 +1,12 @@
+Flask==3.1.3
+Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.3.0
+Authlib==1.8.0
+requests==2.34.2
+mwparserfromhell==0.7.2
+bleach==6.4.0
+PyMySQL==1.2.3
+cryptography==50.0.2
+python-dotenv==1.2.3
+gunicorn==26.2.0
+pytest==9.1.1

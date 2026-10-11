@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="export-container">
+    <h2>تصدير تقارير الأنشطة المجتمعية (CSV Export)</h2>
+    <p>خاص بمنسقي مجموعة المستخدمين لتقديم التقارير الربع سنوية إلى مؤسسة ويكيميديا.</p>
+
+    <div class="export-card">
+        <h3>تصدير كافة الأنشطة الحالية</h3>
+        <p>تحميل ملف بصيغة CSV يتضمن المعرفات، العناوين، المنظمين، ولجان التحكيم.</p>
+        <a href="/api/export" class="cdx-button cdx-button--action cdx-button--weight-primary">
+            تحميل البيانات (Download CSV)
+        </a>
+    </div>
+</div>
+{% endblock %}
