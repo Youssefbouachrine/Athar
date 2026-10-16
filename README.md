@@ -6,7 +6,7 @@ and logs events. Built with Flask, ToolsDB, and Wikimedia Codex on Toolforge.
 
 ---
 
-## 🚀 Quickstart for Students (Day 1)
+## Quickstart for Students (Day 1)
 
 ### 1. Clone your Fork
 
@@ -44,7 +44,7 @@ Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
 
 ---
 
-## 🌿 Contribution Workflow
+## Contribution Workflow
 
 Always create feature branches off `dev`:
 
