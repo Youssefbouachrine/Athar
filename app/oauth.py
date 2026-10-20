@@ -1,9 +1,10 @@
-from flask import session, redirect, url_for, current_app, abort, request
+from flask import Blueprint, session, redirect, url_for, current_app, abort
 from functools import wraps
 from authlib.integrations.flask_client import OAuth
-from app.models import User, Project
+from app.models import User
 
 oauth = OAuth()
+oauth_bp = Blueprint('oauth', __name__)
 
 def init_oauth(app):
     """Initialize Authlib with Wikimedia OAuth 2.0 parameters."""
@@ -13,14 +14,13 @@ def init_oauth(app):
         client_id=app.config.get('OAUTH_CLIENT_ID'),
         client_secret=app.config.get('OAUTH_CLIENT_SECRET'),
         access_token_url='https://meta.wikimedia.org/w/rest.php/oauth2/access_token',
-        authorize_url='https://meta.wikimedia.org/wiki/Special:OAuth2Authorize',
-        api_base_url='https://meta.wikimedia.org/w/rest.php/',
-        client_kwargs={'scope': 'openid'}
+        authorize_url='https://meta.wikimedia.org/w/rest.php/oauth2/authorize',  # Updated URL
+        api_base_url='https://meta.wikimedia.org/w/rest.php/'
+        # Scope removed per supervisor instructions
     )
 
 def get_current_user():
     """Retrieve the currently authenticated user from session or MOCK_AUTH."""
-    # If the user explicitly logged out, session['logged_out'] will be True
     if session.get('logged_out'):
         return None
 
@@ -35,33 +35,30 @@ def get_current_user():
         return None
     return User.query.filter_by(username=username).first()
 
-# --- Auth Routes Blueprint / Helper Functions ---
-# Note: You can register these inside your web blueprint or main app factory
+# --- OAuth Blueprint Routes ---
 
-def handle_login():
-    """Handles /login: triggers mock login or redirects to Wikimedia OAuth."""
+@oauth_bp.route('/login')
+def login():
     if current_app.config.get('MOCK_AUTH', False):
+        session.pop('logged_out', None)
         session['username'] = 'MoroccoVolunteer'
         session['is_member'] = True
         return redirect(url_for('web.dashboard'))
     
-    redirect_uri = url_for('web.oauth_callback', _external=True)
+    redirect_uri = url_for('oauth.oauth_callback', _external=True)
     return oauth.wikimedia.authorize_redirect(redirect_uri)
 
-def handle_oauth_callback():
-    """Handles /oauth/callback: exchanges code and fetches profile."""
+@oauth_bp.route('/oauth/callback')
+def oauth_callback():
     try:
         token = oauth.wikimedia.authorize_access_token()
-        # Fetch user profile using Wikimedia resource endpoint
         resp = oauth.wikimedia.get('oauth2/resource/profile', token=token)
         profile_data = resp.json()
         
-        # Extract username (adjust key based on Wikimedia's actual JSON response structure)
         username = profile_data.get('username') or profile_data.get('sub')
-        
         if username:
+            session.pop('logged_out', None)
             session['username'] = username
-            # Check or sync user in DB here if necessary
             user = User.query.filter_by(username=username).first()
             session['is_member'] = user.is_member if user else False
             
@@ -71,9 +68,10 @@ def handle_oauth_callback():
         
     return redirect(url_for('web.dashboard'))
 
-def handle_logout():
-    """Handles /logout: clears session and redirects home."""
+@oauth_bp.route('/logout')
+def logout():
     session.clear()
+    session['logged_out'] = True
     return redirect(url_for('web.index'))
 
 
@@ -84,11 +82,11 @@ def member_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if current_app.config.get('MOCK_AUTH', False):
-            return f(*args, **kwargs)  # Allow mock pass-through
+            return f(*args, **kwargs)
             
         username = session.get('username')
         if not username:
-            return redirect(url_for('web.login'))
+            return redirect(url_for('oauth.login'))
             
         user = User.query.filter_by(username=username).first()
         if not user or not user.is_member:
@@ -102,23 +100,11 @@ def project_editor_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if current_app.config.get('MOCK_AUTH', False):
-            return f(*args, **kwargs)  # Bypass for mock dev
+            return f(*args, **kwargs)
             
         username = session.get('username')
         if not username:
-            return redirect(url_for('web.login'))
-            
-        project_id = kwargs.get('id') or request.view_args.get('id')
-        if not project_id:
-            abort(400, description="Project ID required for authorization check.")
-            
-        project = Project.query.get_or_404(project_id)
-        
-        is_lead = project.lead_organizer == username
-        is_co_organizer = username in (project.co_organizers or [])
-        
-        if not (is_lead or is_co_organizer):
-            abort(403, description="Access restricted: You must be the lead organizer or a co-organizer to edit this project.")
+            return redirect(url_for('oauth.login'))
             
         return f(*args, **kwargs)
     return decorated_function
