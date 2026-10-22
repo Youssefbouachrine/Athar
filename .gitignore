@@ -20,3 +20,7 @@ htmlcov/
 .DS_Store
 .vscode/
 .idea/
+
+seed_test.py
+.postman/
+postman/
