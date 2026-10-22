@@ -1,10 +1,9 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from config import Config
+from app.models import db
 from app.oauth import init_oauth
 from flask_wtf.csrf import CSRFProtect
 
-db = SQLAlchemy()
 csrf = CSRFProtect()
 
 def create_app(config_class=Config):
