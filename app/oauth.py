@@ -1,7 +1,7 @@
-from flask import Blueprint, session, redirect, url_for, current_app, abort
+from flask import Blueprint, session, redirect, url_for, current_app, abort, request
 from functools import wraps
 from authlib.integrations.flask_client import OAuth
-from app.models import User
+from app.models import User, Project
 
 oauth = OAuth()
 oauth_bp = Blueprint('oauth', __name__)
@@ -14,9 +14,8 @@ def init_oauth(app):
         client_id=app.config.get('OAUTH_CLIENT_ID'),
         client_secret=app.config.get('OAUTH_CLIENT_SECRET'),
         access_token_url='https://meta.wikimedia.org/w/rest.php/oauth2/access_token',
-        authorize_url='https://meta.wikimedia.org/w/rest.php/oauth2/authorize',  # Updated URL
+        authorize_url='https://meta.wikimedia.org/w/rest.php/oauth2/authorize',
         api_base_url='https://meta.wikimedia.org/w/rest.php/'
-        # Scope removed per supervisor instructions
     )
 
 def get_current_user():
@@ -72,7 +71,7 @@ def oauth_callback():
 def logout():
     session.clear()
     session['logged_out'] = True
-    return redirect(url_for('web.index'))
+    return redirect(url_for('web.dashboard'))
 
 
 # --- Security Decorators ---
@@ -105,6 +104,11 @@ def project_editor_required(f):
         username = session.get('username')
         if not username:
             return redirect(url_for('oauth.login'))
+            
+        project_id = kwargs.get('project_id') or kwargs.get('id') or request.view_args.get('id')
+        project = Project.query.get_or_404(project_id)
+        if project.lead_organizer != username and username not in (project.co_organizers or []):
+            abort(403, description="Access restricted: Only the lead organizer or co-organizers can edit this project.")
             
         return f(*args, **kwargs)
     return decorated_function
