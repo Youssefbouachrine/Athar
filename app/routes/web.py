@@ -6,12 +6,36 @@ import bleach
 
 web_bp = Blueprint("web", __name__)
 
+# Predefined communities mapping
+COMMUNITIES = {
+    "wm-ma": {"slug": "wm-ma", "name": "Wikimedia Morocco"},
+    "wm-tn": {"slug": "wm-tn", "name": "Wikimedia Tunisia"},
+}
+
 @web_bp.route("/")
-def dashboard():
+def index():
+    """Landing page with logo, description, and community selection."""
     user = get_current_user()
+    return render_template("index.html", current_user=user, communities=COMMUNITIES.values())
+
+@web_bp.route("/<slug>/")
+def dashboard(slug):
+    """Community-specific dashboard view."""
+    user = get_current_user()
+    
+    # Get community details or fallback to default dict
+    community = COMMUNITIES.get(slug, {"slug": slug, "name": slug.upper()})
+    
     projects = Project.query.order_by(Project.created_at.desc()).limit(10).all()
     total_members = User.query.filter_by(is_member=True).count()
-    return render_template("dashboard.html", projects=projects, total_members=total_members, current_user=user)
+    
+    return render_template(
+        "dashboard.html",
+        community=community,
+        projects=projects,
+        total_members=total_members,
+        current_user=user
+    )
 
 @web_bp.route("/project/new", methods=["GET", "POST"])
 @member_required
@@ -51,7 +75,7 @@ def create_project():
         db.session.add(new_project)
         db.session.commit()
         flash("Project activity created successfully!", "success")
-        return redirect(url_for("web.dashboard"))
+        return redirect(url_for("web.index"))
 
     return render_template("project_form.html", project=None)
 
@@ -81,7 +105,7 @@ def edit_project(project_id):
 
         db.session.commit()
         flash("Project updated successfully!", "success")
-        return redirect(url_for("web.dashboard"))
+        return redirect(url_for("web.index"))
 
     return render_template("project_form.html", project=project)
 

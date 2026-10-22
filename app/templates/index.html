@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Athar Project — Home{% endblock %}
+
+{% block content %}
+<div class="cdx-hero-container" style="text-align: center; padding: 3rem 1rem; max-width: 800px; margin: 0 auto;">
+    <!-- Athar Logo -->
+    <div class="cdx-logo-wrapper" style="margin-bottom: 1.5rem;">
+        <span class="cdx-badge cdx-badge--brand" style="font-size: 2.5rem; padding: 0.5rem 1.5rem; background-color: #d32f2f; color: white; border-radius: 8px;">
+            أثر
+        </span>
+    </div>
+
+    <!-- Project Description -->
+    <h1 style="font-size: 1.8rem; margin-bottom: 1rem; color: #202122;">مشروع أثر (Athar)</h1>
+    <p style="font-size: 1.1rem; line-height: 1.8; color: #54595d; margin-bottom: 2rem;">
+        لوحة قيادة ويب عالية الأداء مستضافة على منصة Toolforge تتولى تجميع مقاييس وإحصائيات التحرير للمجموعات الشقيقة وأعضاء مجتمع ويكيميديا تلقائياً عبر مهام مجدولة تعمل في الخلفية، وتتيح للأعضاء المعتمدين تسجيل وإدارة واستعراض المشاريع المجتمعية الجارية.
+    </p>
+
+    <!-- Select Affiliate Community -->
+    <div class="cdx-community-select-card" style="background: white; padding: 2rem; border: 1px solid #a2a9b1; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">اختر المجموعة الشقيقة للانتقال إلى لوحة القيادة</h3>
+        <select id="home-community-select" class="cdx-select" style="max-width: 400px; margin: 0 auto 1rem auto; padding: 0.6rem;" onchange="if(this.value) window.location.href = '/' + this.value + '/';">
+            <option value="">-- اختر المجموعة (e.g. Wikimedia Morocco) --</option>
+            <option value="wm-ma">ويكيميديا المغرب (Wikimedia Morocco)</option>
+            <option value="wm-tn">ويكيميديا تونس (Wikimedia Tunisia)</option>
+        </select>
+    </div>
+</div>
+{% endblock %}
