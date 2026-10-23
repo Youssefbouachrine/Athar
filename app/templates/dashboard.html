@@ -3,45 +3,83 @@
 {% block title %}{{ community.name if community else 'Wikimedia' }} — Athar{% endblock %}
 
 {% block content %}
-{% if session.get('username') %}
-    <!-- Full dashboard content for logged-in users -->
-    <div class="cdx-dashboard-grid">
-        <div class="cdx-stats-row" style="display: flex; gap: 1rem; margin-bottom: 2rem;">
-            <div class="cdx-card" style="flex: 1; background: white; padding: 1.5rem; border: 1px solid #a2a9b1; text-align: center;">
-                <h3>Registered Members</h3>
-                <p style="font-size: 2rem; font-weight: bold; color: #36c;">{{ member_count | default(0) }}</p>
-            </div>
-            <div class="cdx-card" style="flex: 1; background: white; padding: 1.5rem; border: 1px solid #a2a9b1; text-align: center;">
-                <h3>Documented Projects</h3>
-                <p style="font-size: 2rem; font-weight: bold; color: #36c;">{{ project_count | default(0) }}</p>
-            </div>
-            <div class="cdx-card" style="flex: 1; background: white; padding: 1.5rem; border: 1px solid #a2a9b1; text-align: center;">
-                <h3>Automatic Stats Sync</h3>
-                <p style="font-size: 1.5rem; font-weight: bold; color: #14866d;">Every 4 Hours</p>
-            </div>
+
+<div class="dashboard-charts">
+
+    <div class="stats-summary">
+        <div class="kpi-card">
+            <span class="kpi-title">أعضاء المجتمع</span>
+            <span class="kpi-value" id="totalMembers">—</span>
         </div>
 
-        <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 300px; background: white; padding: 1.5rem; border: 1px solid #a2a9b1;">
-                <h3>Activity Distribution</h3>
-                <canvas id="activitiesChart"></canvas>
-            </div>
-            <div style="flex: 2; min-width: 300px; background: white; padding: 1.5rem; border: 1px solid #a2a9b1;">
-                <h3>Latest Community Activities & Projects</h3>
-                {% if projects %}
-                    <!-- List of Projects -->
-                {% else %}
-                    <p style="color: #72777d; text-align: center; padding: 2rem;">No activities registered currently.</p>
-                {% endif %}
-            </div>
+        <div class="kpi-card">
+            <span class="kpi-title">عدد المشاريع</span>
+            <span class="kpi-value" id="totalProjects">—</span>
+        </div>
+
+        <div class="kpi-card">
+            <span class="kpi-title">مجموع التعديلات</span>
+            <span class="kpi-value" id="totalEdits">—</span>
         </div>
     </div>
-{% else %}
-    <!-- Public Dashboard View when NOT logged in (Placeholder for your friend) -->
-    <div class="public-dashboard-container" style="padding: 2rem 1rem; max-width: 1100px; margin: 0 auto;">
-        <div class="public-dashboard-content" style="background: white; padding: 3rem; border: 1px solid #a2a9b1; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; min-height: 400px; display: flex; align-items: center; justify-content: center;">
-            <h2 style="color: #202122; font-weight: 400;">     </h2>
+
+    <div class="chart-card">
+        <h3>المشاريع حسب نوع النشاط</h3>
+        <div class="chart-container">
+            <canvas id="activityChart"></canvas>
         </div>
     </div>
-{% endif %}
+
+    <div class="chart-card">
+        <h3>مقارنة الأعضاء والمشاريع</h3>
+        <div class="chart-container">
+            <canvas id="overviewChart"></canvas>
+        </div>
+    </div>
+    <div class="filter-project-box">
+        <label for="list-comm">اختر المجتمع:</label>
+        <select id="list-comm"></select>
+        
+
+<form id="dashboard-filters">
+    <input type="date" id="start-date">
+    <input type="date" id="end-date">
+
+    <select id="activity-type">
+        <option value="">All types</option>
+        <option value="Workshop">Workshops</option>
+        <option value="Edit-a-thon">Edit-a-thons</option>
+        <option value="Photo Walk">Photo Walks</option>
+    </select>
+
+    <select id="project-status">
+        <option value="">All statuses</option>
+        <option value="active">Active</option>
+        <option value="completed">Completed</option>
+        <option value="In progress">In progress</option>
+        <option value="Planned">
+            Planned
+        </option>
+    </select>
+
+    <button type="submit" id="apply-filters">
+        Filter
+    </button>
+
+    <button type="reset" id="reset-filters">
+        Reset
+    </button>
+</form>
+    <div id="filter-results">
+    Choisis les filtres puis clique sur Filter.
+</div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/filters.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}" defer></script>
 {% endblock %}
