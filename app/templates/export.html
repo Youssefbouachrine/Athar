@@ -11,6 +11,20 @@
         <a href="/api/export" class="cdx-button cdx-button--action cdx-button--weight-primary">
             تحميل البيانات (Download CSV)
         </a>
+        
+
+    </div>
+    <div class="export-community">
+        <h3>تصدير كافة الأنشطة الحالية الخاصة بالمجموعة المعنية</h3>
+        <select name="" id="communities"></select>
+        <p>تحميل ملف بصيغة CSV يتضمن المعرفات، العناوين، المنظمين، ولجان التحكيم.</p>
+        <a href="" class="cdx-button cdx-button--action cdx-button--weight-primary" id="export-comm-btn">
+            تحميل البيانات (Download CSV)
+        </a>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/export.js') }}" defer></script>
 {% endblock %}

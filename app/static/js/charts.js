@@ -1,21 +1,171 @@
-document.addEventListener("DOMContentLoaded", function() {
-    const ctx = document.getElementById("projectsChart");
-    if (ctx) {
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['ورشات (Workshops)', 'ماراثون تحرير (Edit-a-thons)', 'جولات تصوير (Photo Walks)'],
-                datasets: [{
-                    data: [12, 19, 7],
-                    backgroundColor: ['#16a34a', '#3366cc', '#dc2626']
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'bottom' }
-                }
-            }
-        });
+
+document.addEventListener("DOMContentLoaded", () => {
+    const membersElement = document.getElementById("totalMembers");
+    const projectsElement = document.getElementById("totalProjects");
+    const editsElement = document.getElementById("totalEdits");
+
+    const activityCanvas = document.getElementById("activityChart");
+    const overviewCanvas = document.getElementById("overviewChart");
+    const errorElement = document.getElementById("statsError");
+
+    let activityChart = null;
+    let overviewChart = null;
+
+    // Get community slug from the current URL.
+    // Example: http://127.0.0.1:5000/wm-ma/ -> wm-ma
+    function getCommunitySlug() {
+        const pathParts = window.location.pathname
+            .split("/")
+            .filter(Boolean);
+
+        return pathParts.length ? pathParts[pathParts.length - 1] : null;
     }
+
+    function showError(message) {
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.hidden = false;
+        }
+    }
+
+    function clearError() {
+        if (errorElement) {
+            errorElement.textContent = "";
+            errorElement.hidden = true;
+        }
+    }
+
+    function destroyCharts() {
+        if (activityChart) {
+            activityChart.destroy();
+            activityChart = null;
+        }
+
+        if (overviewChart) {
+            overviewChart.destroy();
+            overviewChart = null;
+        }
+    }
+
+    async function loadStats() {
+        const communitySlug = getCommunitySlug();
+
+        if (!communitySlug) {
+            showError("Community slug not found in URL.");
+
+            if (membersElement) membersElement.textContent = "—";
+            if (projectsElement) projectsElement.textContent = "—";
+            if (editsElement) editsElement.textContent = "—";
+
+            destroyCharts();
+            return;
+        }
+
+        clearError();
+
+        try {
+            const response = await fetch(
+                `/api/${encodeURIComponent(communitySlug)}/stats`
+            );
+
+            if (!response.ok) {
+                throw new Error(
+                    `Failed to load stats (${response.status})`
+                );
+            }
+
+            const stats = await response.json();
+
+            // Update summary cards.
+            if (membersElement) {
+                membersElement.textContent =
+                    stats.total_community_member ?? 0;
+            }
+
+            if (projectsElement) {
+                projectsElement.textContent =
+                    stats.total_project_member ?? 0;
+            }
+
+            if (editsElement) {
+                editsElement.textContent =
+                    stats.total_edits_member_comm ?? 0;
+            }
+
+            // Bar chart: projects by type.
+            const activities = stats.activities_by_type ?? {};
+
+            if (activityCanvas) {
+                if (activityChart) {
+                    activityChart.destroy();
+                }
+
+                activityChart = new Chart(activityCanvas, {
+                    type: "bar",
+                    data: {
+                        labels: Object.keys(activities),
+                        datasets: [{
+                            label: "Number of projects",
+                            data: Object.values(activities),
+                            backgroundColor: "#4f46e5",
+                            borderRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (overviewCanvas) {
+                if (overviewChart) {
+                    overviewChart.destroy();
+                }
+
+                overviewChart = new Chart(overviewCanvas, {
+                    type: "doughnut",
+                    data: {
+                        labels: [
+                            "Community members",
+                            "Projects"
+                        ],
+                        datasets: [{
+                            data: [
+                                stats.total_community_member ?? 0,
+                                stats.total_project_member ?? 0
+                            ],
+                            backgroundColor: [
+                                "#0ea5e9",
+                                "#f59e0b"
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+        } catch (error) {
+            console.error("Dashboard stats error:", error);
+            showError("Could not load dashboard statistics.");
+        }
+    }
+
+    loadStats();
 });

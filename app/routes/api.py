@@ -26,24 +26,72 @@ def get_stats():
     latest_snapshots = StatSnapshot.query.order_by(StatSnapshot.recorded_at.desc()).limit(100).all()
     total_edits = sum(s.total_edits for s in latest_snapshots)
 
+
     return jsonify({
         "total_members": total_members,
         "total_projects": total_projects,
         "total_edits": total_edits
     })
     
+
+from flask import jsonify
+from sqlalchemy import func
+
 @api_bp.route("/<string:slug>/stats", methods=["GET"])
 def slug_Stat(slug):
     community = Community.query.filter_by(slug=slug).first()
+
     if not community:
         return jsonify({"error": "Community not found"}), 404
-        
-    count_community_member = db.session.query(func.count(CommunityMember.user_id)).filter(CommunityMember.community_id == community.id).scalar()
-    count_project = db.session.query(func.count(Project.id)).filter(Project.community_id == community.id).scalar()
-    
+
+    count_community_member = (
+        db.session.query(func.count(CommunityMember.user_id))
+        .filter(CommunityMember.community_id == community.id)
+        .scalar()
+    )
+
+    count_project = (
+        db.session.query(func.count(Project.id))
+        .filter(Project.community_id == community.id)
+        .scalar()
+    )
+
+    activity_rows = (
+        db.session.query(
+            Project.project_type,
+            func.count(Project.id).label("total")
+        )
+        .filter(Project.community_id == community.id)
+        .group_by(Project.project_type)
+        .all()
+    )
+
+    activities_by_type = {
+        project_type: total
+        for project_type, total in activity_rows
+    }
+    community_members = CommunityMember.query.filter_by(
+        community_id=community.id
+    ).all()
+
+    member_ids = [cm.user_id for cm in community_members]
+
+    total_edits_member_comm = 0
+
+    if member_ids:
+        total_edits_member_comm = (
+            db.session.query(
+                func.coalesce(func.sum(StatSnapshot.total_edits), 0)
+            )
+            .filter(StatSnapshot.user_id.in_(member_ids))
+            .scalar()
+        )
     return jsonify({
+        "community_name": community.name,
         "total_community_member": count_community_member,
-        "total_project_member": count_project
+        "total_project_member": count_project,
+        "total_edits_member_comm": total_edits_member_comm,
+        "activities_by_type": activities_by_type
     })
 
     
@@ -200,5 +248,5 @@ def exp_community_projects(slug):
     return Response(
         output.getvalue(),
         mimetype="text/csv",
-        headers={"Content-Disposition": "attachment;filename=athar_projects.csv"}
+        headers={"Content-Disposition": f"attachment;filename={community.name}.csv"}
     )
