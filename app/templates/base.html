@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ config.COMMUNITY_NAME }} — أثر (Athar)</title>
+    <title>{{ config.COMMUNITY_NAME if config else 'Athar Project' }} — Athar</title>
     <!-- Wikimedia Codex CSS Distribution -->
     <link rel="stylesheet" href="https://tools-static.wmflabs.org/cdnjs/ajax/libs/codex/0.17.1/codex.style.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/codex.style.css') }}">
@@ -14,18 +14,22 @@
     <header class="cdx-header">
         <div class="header-container">
             <a href="{{ url_for('web.index') }}" class="brand-title">
-                <span class="brand-badge">أثر</span> {{ community.name if community else 'مشروع أثر' }}
+                <span class="brand-badge">Athar</span> {{ community.name if community else 'Athar Project' }}
             </a>
-            <nav class="nav-links">
-                {% if session.get('username') %}
-                    <a href="{{ url_for('web.dashboard', slug=community.slug if community else 'wm-ma') }}" class="cdx-button cdx-button--quiet">لوحة القيادة (Dashboard)</a>
-                    <a href="{{ url_for('web.create_project') }}" class="cdx-button cdx-button--action cdx-button--weight-primary">+ إضافة نشاط</a>
-                    <span class="user-greeting">مرحباً، <strong>{{ session.get('username') }}</strong></span>
-                    <a href="{{ url_for('oauth.logout') }}" class="cdx-button cdx-button--quiet">خروج</a>
-                {% else %}
-                    <a href="{{ url_for('oauth.login') }}" class="cdx-button cdx-button--action cdx-button--weight-primary">تسجيل الدخول بـ Wikimedia</a>
-                {% endif %}
-            </nav>
+            
+            <!-- Hide navigation and login on the landing page (index), show them on community dashboards -->
+            {% if request.endpoint != 'web.index' %}
+                <nav class="nav-links">
+                    {% if session.get('username') %}
+                        <a href="{{ url_for('web.dashboard', slug=community.slug if community else 'wm-ma') }}" class="cdx-button cdx-button--quiet">Dashboard</a>
+                        <a href="{{ url_for('web.create_project') }}" class="cdx-button cdx-button--action cdx-button--weight-primary">+ Add Activity</a>
+                        <span class="user-greeting">Welcome, <strong>{{ session.get('username') }}</strong></span>
+                        <a href="{{ url_for('oauth.logout') }}" class="cdx-button cdx-button--quiet">Log out</a>
+                    {% else %}
+                        <a href="{{ url_for('oauth.login') }}" class="cdx-button cdx-button--action cdx-button--weight-primary">Log in with Wikimedia</a>
+                    {% endif %}
+                </nav>
+            {% endif %}
         </div>
     </header>
 
@@ -46,7 +50,7 @@
     </main>
 
     <footer class="cdx-footer">
-        <p>أثر (Athar) — أداة مجتمعية مفتوحة المصدر تستضيفها <a href="https://toolforge.org">Wikimedia Toolforge</a>.</p>
+        <p>Athar — An open-source community tool hosted on <a href="https://toolforge.org">Wikimedia Toolforge</a>.</p>
     </footer>
 
     {% block scripts %}{% endblock %}

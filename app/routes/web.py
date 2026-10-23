@@ -1,22 +1,55 @@
+import re
+import bleach
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from app import db
 from app.models import Project, User, StatSnapshot
 from app.oauth import member_required, project_editor_required, get_current_user
-from app import db
-import bleach
 
 web_bp = Blueprint("web", __name__)
 
 # Predefined communities mapping
 COMMUNITIES = {
-    "wm-ma": {"slug": "wm-ma", "name": "Wikimedia Morocco"},
-    "wm-tn": {"slug": "wm-tn", "name": "Wikimedia Tunisia"},
+    "wm-ma": {"slug": "wm-ma", "name": "Wikimedia Morocco", "url": "https://meta.wikimedia.org/wiki/Wikimedia_Morocco"},
+    "wm-tn": {"slug": "wm-tn", "name": "Wikimedia Tunisia", "url": "https://meta.wikimedia.org/wiki/Wikimedia_Tunisia"},
 }
+
+
+def slugify(text):
+    """Generate a clean URL slug from string input."""
+    text = text.lower().strip()
+    text = re.sub(r'[^\w\s-]', '', text)
+    return re.sub(r'[\s_-]+', '-', text)
+
 
 @web_bp.route("/")
 def index():
-    """Landing page with logo, description, and community selection."""
+    """Landing page with logo, description, community selection, and community add form."""
     user = get_current_user()
     return render_template("index.html", current_user=user, communities=COMMUNITIES.values())
+
+
+@web_bp.route("/add-community", methods=["POST"])
+def add_community():
+    """Handle new community addition requests."""
+    name = request.form.get("community_name", "").strip()
+    link = request.form.get("community_link", "").strip()
+
+    if not name or not link:
+        flash("Please provide both a community name and a valid Wikimedia link.", "error")
+        return redirect(url_for("web.index"))
+
+    slug = slugify(name) or f"community-{len(COMMUNITIES) + 1}"
+    
+    # Store in session or temporary dict for local execution
+    COMMUNITIES[slug] = {
+        "slug": slug,
+        "name": name,
+        "url": link
+    }
+
+    flash(f"Community '{name}' added successfully! You can now select it from the dropdown.", "success")
+    return redirect(url_for("web.index"))
+
 
 @web_bp.route("/<slug>/")
 def dashboard(slug):
@@ -24,7 +57,7 @@ def dashboard(slug):
     user = get_current_user()
     
     # Get community details or fallback to default dict
-    community = COMMUNITIES.get(slug, {"slug": slug, "name": slug.upper()})
+    community = COMMUNITIES.get(slug, {"slug": slug, "name": slug.replace("-", " ").title()})
     
     projects = Project.query.order_by(Project.created_at.desc()).limit(10).all()
     total_members = User.query.filter_by(is_member=True).count()
@@ -36,6 +69,7 @@ def dashboard(slug):
         total_members=total_members,
         current_user=user
     )
+
 
 @web_bp.route("/project/new", methods=["GET", "POST"])
 @member_required
@@ -79,6 +113,7 @@ def create_project():
 
     return render_template("project_form.html", project=None)
 
+
 @web_bp.route("/project/<int:project_id>/edit", methods=["GET", "POST"])
 @project_editor_required
 def edit_project(project_id):
@@ -108,6 +143,7 @@ def edit_project(project_id):
         return redirect(url_for("web.index"))
 
     return render_template("project_form.html", project=project)
+
 
 @web_bp.route("/export")
 def export_view():
