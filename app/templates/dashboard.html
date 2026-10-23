@@ -1,55 +1,47 @@
 {% extends "base.html" %}
 
+{% block title %}{{ community.name if community else 'Wikimedia' }} — Athar{% endblock %}
+
 {% block content %}
-<section class="kpi-grid">
-    <div class="kpi-card">
-        <span class="kpi-title">أعضاء المجتمع المسجلون</span>
-        <span class="kpi-value" id="kpi-members">{{ total_members }}</span>
-    </div>
-    <div class="kpi-card">
-        <span class="kpi-title">المشاريع الموثقة</span>
-        <span class="kpi-value" id="kpi-projects">{{ projects|length }}</span>
-    </div>
-    <div class="kpi-card">
-        <span class="kpi-title">تحديث الإحصائيات التلقائي</span>
-        <span class="kpi-value kpi-green">كل 4 ساعات</span>
-    </div>
-</section>
-
-<section class="content-split">
-    <div class="projects-list-container">
-        <h2>أحدث الأنشطة والمشاريع المجتمعية</h2>
-        {% if projects %}
-            <div class="projects-grid">
-                {% for p in projects %}
-                    <article class="project-card">
-                        <div class="project-header">
-                            <span class="badge badge-type">{{ p.project_type }}</span>
-                            <span class="badge badge-status">{{ p.status }}</span>
-                        </div>
-                        <h3>{{ p.title }}</h3>
-                        <div class="project-body">{{ p.description|safe }}</div>
-                        <div class="project-meta">
-                            <span>المنظم: <strong>{{ p.lead_organizer }}</strong></span>
-                            {% if p.is_contest %}<span class="badge badge-contest">مسابقة / تحكيم</span>{% endif %}
-                        </div>
-                    </article>
-                {% endfor %}
+{% if session.get('username') %}
+    <!-- Full dashboard content for logged-in users -->
+    <div class="cdx-dashboard-grid">
+        <div class="cdx-stats-row" style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+            <div class="cdx-card" style="flex: 1; background: white; padding: 1.5rem; border: 1px solid #a2a9b1; text-align: center;">
+                <h3>Registered Members</h3>
+                <p style="font-size: 2rem; font-weight: bold; color: #36c;">{{ member_count | default(0) }}</p>
             </div>
-        {% else %}
-            <div class="empty-state">
-                <p>لا توجد أنشطة مسجلة حالياً. سجل دخولك لإضافة أول مشروع!</p>
+            <div class="cdx-card" style="flex: 1; background: white; padding: 1.5rem; border: 1px solid #a2a9b1; text-align: center;">
+                <h3>Documented Projects</h3>
+                <p style="font-size: 2rem; font-weight: bold; color: #36c;">{{ project_count | default(0) }}</p>
             </div>
-        {% endif %}
+            <div class="cdx-card" style="flex: 1; background: white; padding: 1.5rem; border: 1px solid #a2a9b1; text-align: center;">
+                <h3>Automatic Stats Sync</h3>
+                <p style="font-size: 1.5rem; font-weight: bold; color: #14866d;">Every 4 Hours</p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 300px; background: white; padding: 1.5rem; border: 1px solid #a2a9b1;">
+                <h3>Activity Distribution</h3>
+                <canvas id="activitiesChart"></canvas>
+            </div>
+            <div style="flex: 2; min-width: 300px; background: white; padding: 1.5rem; border: 1px solid #a2a9b1;">
+                <h3>Latest Community Activities & Projects</h3>
+                {% if projects %}
+                    <!-- List of Projects -->
+                {% else %}
+                    <p style="color: #72777d; text-align: center; padding: 2rem;">No activities registered currently.</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
-
-    <aside class="charts-sidebar">
-        <h2>توزيع الأنشطة</h2>
-        <canvas id="projectsChart" width="300" height="300"></canvas>
-    </aside>
-</section>
-{% endblock %}
-
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% else %}
+    <!-- Public Dashboard View when NOT logged in (Placeholder for your friend) -->
+    <div class="public-dashboard-container" style="padding: 2rem 1rem; max-width: 1100px; margin: 0 auto;">
+        <div class="public-dashboard-content" style="background: white; padding: 3rem; border: 1px solid #a2a9b1; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; min-height: 400px; display: flex; align-items: center; justify-content: center;">
+            <h2 style="color: #202122; font-weight: 400;">     </h2>
+        </div>
+    </div>
+{% endif %}
 {% endblock %}
