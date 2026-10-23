@@ -56,7 +56,9 @@ def dashboard(slug):
     """Community-specific dashboard view."""
     user = get_current_user()
     
-    # Get community details or fallback to default dict
+    # Save active community slug in session for oauth redirects
+    session['community_slug'] = slug
+    
     community = COMMUNITIES.get(slug, {"slug": slug, "name": slug.replace("-", " ").title()})
     
     projects = Project.query.order_by(Project.created_at.desc()).limit(10).all()
@@ -69,7 +71,6 @@ def dashboard(slug):
         total_members=total_members,
         current_user=user
     )
-
 
 @web_bp.route("/project/new", methods=["GET", "POST"])
 @member_required
