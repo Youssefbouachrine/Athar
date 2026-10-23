@@ -30,7 +30,15 @@ def index():
 
 @web_bp.route("/add-community", methods=["POST"])
 def add_community():
-    """Handle new community addition requests."""
+    """Handle new community addition requests (restricted to authenticated users)."""
+    if not session.get('username'):
+        # Save form fields temporarily in session so user doesn't lose data after login redirect
+        session['pending_community_name'] = request.form.get("community_name", "").strip()
+        session['pending_community_link'] = request.form.get("community_link", "").strip()
+        
+        flash("You must log in with your Wikimedia account before adding a community.", "error")
+        return redirect(url_for("oauth.login"))
+
     name = request.form.get("community_name", "").strip()
     link = request.form.get("community_link", "").strip()
 
